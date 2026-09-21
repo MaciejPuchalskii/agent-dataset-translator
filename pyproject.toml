@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "polish-dataset-translator"
+version = "0.1.0"
+description = "Production pipeline for translating English BFCL datasets into Polish."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = ["azure-identity>=1.17.0", "huggingface-hub>=0.24.0", "openai>=1.40.0", "python-dotenv>=1.0.1", "tenacity>=8.3.0", "typer>=0.12.5"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.3.0", "pytest-cov>=5.0.0", "ruff>=0.6.0", "mypy>=1.11.0"]
+bfcl = ["bfcl-eval>=2025.1.1"]
+
+[project.scripts]
+polish-dataset-translator = "polish_dataset_translator.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
