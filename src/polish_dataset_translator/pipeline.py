@@ -33,10 +33,19 @@ class TranslationPipeline:
     def run(self, input_path: Path, output_path: Path, report_path: Path) -> RunReport:
         files = iter_jsonl_files(input_path)
         report = RunReport(input_files=len(files))
-        checkpoint_path = output_path.with_suffix(output_path.suffix + ".checkpoint.json")
+        output_is_directory = input_path.is_dir()
+        checkpoint_path = output_path / ".checkpoint.json" if output_is_directory else output_path.with_suffix(output_path.suffix + ".checkpoint.json")
         checkpoint = load_checkpoint(checkpoint_path)
         pending: list[dict[str, object]] = []
         pending_target_count = 0
+
+        def output_for_source(source: Path) -> Path:
+            if not output_is_directory:
+                return output_path
+            relative = source.relative_to(input_path)
+            if relative.name.startswith("BFCL_"):
+                relative = relative.with_name("BFCL_PL_" + relative.name[len("BFCL_"):])
+            return output_path / relative
 
         def flush_pending() -> None:
             nonlocal pending, pending_target_count
@@ -79,10 +88,10 @@ class TranslationPipeline:
                     errors = validate_integrity(record, result)
                     if errors:
                         raise ValueError("; ".join(errors))
-                    append_jsonl(output_path, result)
+                    append_jsonl(entry["output_path"], result)  # type: ignore[arg-type]
                     checkpoint[str(record_id)] = str(fingerprint)
                     save_checkpoint(checkpoint_path, checkpoint)
-                    print(f"[record {record_id}] saved to {output_path}", flush=True)
+                    print(f"[record {record_id}] saved to {entry['output_path']}", flush=True)
                     status = "review" if plan.review_reasons else "translated"
                     if status == "review":
                         report.review_records += 1
@@ -109,13 +118,14 @@ class TranslationPipeline:
                 try:
                     plan = self.adapter.plan(record, source.name)
                     print(f"[record {record_id}] category={plan.category}, targets={len(plan.targets)}", flush=True)
+                    source_output = output_for_source(source)
                     if pending and pending_target_count + len(plan.targets) > self.batch_size:
                         flush_pending()
                     if not plan.targets:
-                        pending.append({"record": record, "plan": plan, "record_id": record_id, "fingerprint": fingerprint, "translated": {}})
+                        pending.append({"record": record, "plan": plan, "record_id": record_id, "fingerprint": fingerprint, "translated": {}, "output_path": source_output})
                         flush_pending()
                     else:
-                        pending.append({"record": record, "plan": plan, "record_id": record_id, "fingerprint": fingerprint, "translated": {}})
+                        pending.append({"record": record, "plan": plan, "record_id": record_id, "fingerprint": fingerprint, "translated": {}, "output_path": source_output})
                         pending_target_count += len(plan.targets)
                         if pending_target_count >= self.batch_size:
                             flush_pending()

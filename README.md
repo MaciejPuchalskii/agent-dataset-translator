@@ -27,8 +27,10 @@ polish-dataset-translator translate --input data\raw --output data\translated\bf
 Domyślnie pipeline wysyła `20` tekstów w jednym requestcie. Możesz zmienić rozmiar paczki:
 
 ```powershell
-polish-dataset-translator translate --input data\raw --output data\translated\bfcl.jsonl --report reports\bfcl.json --batch-size 20
+polish-dataset-translator translate --input data\raw --output data\translated --report reports\bfcl.json --batch-size 20
 ```
+
+Gdy `--input` jest katalogiem, `--output` również jest katalogiem. Pipeline zachowuje strukturę podkatalogów i dodaje prefiks `BFCL_PL_` do plików BFCL, np. `BFCL_v3_chatable.json` zapisuje jako `BFCL_PL_v3_chatable.json`.
 
 Pobranie danych BFCL bez `load_dataset`:
 

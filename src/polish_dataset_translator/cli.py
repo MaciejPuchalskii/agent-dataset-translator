@@ -28,7 +28,7 @@ def download(
 @app.command()
 def translate(
     input: Path = typer.Option(..., exists=True, readable=True, help="BFCL JSONL file or directory."),  # noqa: B008
-    output: Path = typer.Option(..., help="Output JSONL file."),  # noqa: B008
+    output: Path = typer.Option(..., help="Output JSONL file or directory mirroring the input."),  # noqa: B008
     report: Path = typer.Option(..., help="Quality report JSON."),  # noqa: B008
     batch_size: int = typer.Option(20, min=1, max=100, help="Number of texts sent in one model request."),
 ) -> None:

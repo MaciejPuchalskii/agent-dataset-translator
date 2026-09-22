@@ -34,3 +34,17 @@ def test_pipeline_writes_checkpoint_and_review_outputs(tmp_path) -> None:
     assert len(output.read_text(encoding="utf-8").splitlines()) == 2
     assert report_path.with_suffix(".csv").exists()
     assert report_path.with_suffix(".review.jsonl").exists()
+
+
+def test_directory_output_preserves_structure_and_adds_polish_prefix(tmp_path) -> None:
+    input_dir = tmp_path / "raw"
+    input_dir.mkdir()
+    source = input_dir / "BFCL_v3_chatable.json"
+    source.write_text(json.dumps({"id": "chat_1", "question": [[{"role": "user", "content": "Hello"}]], "function": [], "ground_truth": []}) + "\n", encoding="utf-8")
+    output_dir = tmp_path / "translated"
+    pipeline = TranslationPipeline(FakeTranslator(), batch_size=20)
+
+    pipeline.run(input_dir, output_dir, tmp_path / "reports" / "run.json")
+
+    assert (output_dir / "BFCL_PL_v3_chatable.json").exists()
+    assert not (output_dir / "BFCL_v3_chatable.json").exists()
